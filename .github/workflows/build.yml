@@ -1,0 +1,68 @@
+name: Build Radix IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    name: Build unsigned IPA
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: |
+          xcodegen generate
+          echo "----- 生成的 scheme 列表 -----"
+          xcodebuild -list -project Radix.xcodeproj
+
+      - name: Build (no signing)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Radix.xcodeproj \
+            -scheme Radix \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package into IPA
+        run: |
+          APP_PATH="build/Build/Products/Release-iphoneos/Radix.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "找不到构建产物：$APP_PATH"
+            find build/Build/Products -maxdepth 2 -type d
+            exit 1
+          fi
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          zip -qry Radix-unsigned.ipa Payload
+          ls -lh Radix-unsigned.ipa
+          unzip -l Radix-unsigned.ipa | head -20
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Radix-unsigned-ipa
+          path: Radix-unsigned.ipa
+          if-no-files-found: error
