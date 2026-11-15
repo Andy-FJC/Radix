@@ -1,0 +1,121 @@
+# Radix · 进制转换 + 四则运算（iOS）
+
+任意进制（2 – 36）互转与加减乘除的 iOS App。SwiftUI 编写，零第三方依赖，自实现 BigInt，支持超大整数与负数。
+
+顶部两个页签，**全程使用 App 内置的计算器键盘，不弹出系统键盘**（十六进制字母可以直接点）：
+
+**进制转换**
+- 切换输入进制：二进制 / 八进制 / 十进制 / 十六进制 / 自定义
+- 下方固定显示五种结果，点任意一行即复制
+- 最后一行可下拉切换 2 – 36 任意目标进制
+- 32 位以上的二进制会自动折行，不会缩成蚂蚁字
+
+**四则运算**
+- 同一个进制下输入 A、B，选 + − × ÷，实时出结果
+- 结果同样按 二进制 / 八进制 / 十进制 / 十六进制 / 自定义 五路并列显示，点任意一行复制
+- 支持负数（± 键）、超大整数（几百位也不溢出）
+- 除法为整数除法，向零截断，余数单独再列一份五进制结果
+
+**内置键盘**
+- 数字键只保留当前进制合法的，其它变灰不可点（二进制只有 0/1）
+- 进制 ≥ 11 时自动长出字母键，最多到 A–Z（36 进制）
+- ⌫ 退格、C 清空、± 换正负号
+- 绿色描边标出当前正在输入哪个框，点 A / B 框即可切换
+
+---
+
+## 编译成 IPA（用 GitHub 的 macOS 机器，不需要自己有 Mac）
+
+整个过程约 10 分钟，其中编译只占 2–3 分钟。**公开仓库的 Actions 完全免费。**
+
+### 第 1 步：注册 / 登录 GitHub
+
+浏览器打开 `github.com`，没有账号就用邮箱注册一个（免费）。
+
+### 第 2 步：新建仓库
+
+1. 打开 `github.com/new`
+2. **Repository name** 填 `radix-ios`
+3. 可见性选 **Public**（公开仓库不消耗 Actions 额度）
+4. 下面的 "Add a README file" 等选项**一个都不要勾**
+5. 点绿色按钮 **Create repository**
+
+### 第 3 步：上传文件
+
+1. 把 `radix-ios.zip` 解压，得到 `radix-ios` 文件夹
+2. **进入 `radix-ios` 文件夹**，按 `Ctrl + A` 全选里面的所有内容
+   - 应该看到：`.github`、`Radix`、`project.yml`、`README.md`
+3. 新建的仓库页面上有一行链接 **"uploading an existing file"**，点它
+4. 把选中的内容**拖进**网页中间的虚线框
+5. 等文件列表加载完，页面底部点绿色 **Commit changes**
+
+> 如果 `.github` 文件夹没有上传成功（仓库首页看不到它），看下面的「备用：手动创建 workflow」。
+
+### 第 4 步：跑编译
+
+1. 点仓库顶部的 **Actions** 标签
+2. 左边栏应该能看到 **Build Radix IPA**，点它
+3. 右边有灰色提示条，点 **Run workflow** → 再点绿色 **Run workflow**
+4. 刷新页面，会出现一条黄色圆点正在跑的记录，点进去
+5. 展开 **Build (no signing)** 步骤，能看到 `xcodebuild` 的输出在滚动
+
+**大约 2–3 分钟后**，整个记录变成绿色对勾。
+
+### 第 5 步：下载 IPA
+
+1. 在刚才那条运行记录的页面，**滚到最底部**
+2. 有一个 **Artifacts** 区域，点 **Radix-unsigned-ipa**
+3. 下载得到一个 `.zip`，解压里面就是 **`Radix-unsigned.ipa`**（约 1–2 MB）
+
+### 第 6 步：签名安装到手机
+
+这个 IPA 是**未签名**的，必须用你的证书签一次才能装：
+
+1. 手机插线、解锁、点信任
+2. 电脑上打开 AltServer，右键托盘图标 → **Sideload .ipa**
+3. 选 `Radix-unsigned.ipa`
+4. 输 Apple ID（会记住上次的）→ 等 30 秒
+5. 手机上：设置 → 通用 → VPN 与设备管理 → 信任证书
+
+装好后桌面就是那个双箭头图标，名字叫 **Radix**。
+
+---
+
+## 备用：手动创建 workflow
+
+如果第 3 步 `.github` 文件夹没传上去，页面顶部的 Actions 标签会显示"没有 workflow"，那就手动补：
+
+1. 仓库首页点 **Add file** → **Create new file**
+2. 文件名输入框里粘贴这一整串（斜杠会自动建目录）：
+   ```
+   .github/workflows/build.yml
+   ```
+3. 打开本地的 `.github/workflows/build.yml`，把内容全选复制，粘进网页编辑框
+4. 页面底部点 **Commit changes**
+
+然后再回到第 4 步。
+
+---
+
+## 常见问题
+
+**编译报错 `No such module 'SwiftUI'`**
+说明 `-sdk iphoneos` 没生效。检查 `.github/workflows/build.yml` 是否被改动过。
+
+**编译报错 `xcodegen: command not found`**
+`brew install xcodegen` 那一步失败了，重新跑一次 workflow 即可（偶发网络问题）。
+
+**Artifacts 里没有东西**
+说明 `Package into IPA` 那一步失败了，展开日志能看到具体原因，通常是 `Radix.app` 路径不对 —— 日志里会打印 `build/Build/Products` 下的实际目录。
+
+**装上去闪退**
+通常是签名时 Bundle ID 冲突。在 AltServer 里换一个 Apple ID，或者用 Sideloadly 改一下 Bundle ID 再签。
+
+**7 天后打不开**
+免费 Apple ID 的证书有效期就是 7 天。到时候用同一个 IPA 重新 Sideload 一次，30 秒，数据不丢。
+
+---
+
+## 本地修改后重新编译
+
+改完 Swift 代码，`git push` 上去，Actions 会自动重新跑一遍（workflow 里配了 `push` 触发）。不用手动点。

@@ -1,0 +1,44 @@
+name: Radix
+options:
+  bundleIdPrefix: com.radix
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+targets:
+  Radix:
+    type: application
+    platform: iOS
+    sources:
+      - path: Radix/Sources
+      - path: Radix/Resources
+    settings:
+      base:
+        PRODUCT_NAME: Radix
+        PRODUCT_BUNDLE_IDENTIFIER: com.radix.converter
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Radix
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleLightContent
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_ALLOWED: NO
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+
+schemes:
+  Radix:
+    build:
+      targets:
+        Radix: all
+    run:
+      config: Release
+    archive:
+      config: Release
