@@ -124,12 +124,3 @@ struct Keypad: View {
         .buttonStyle(KeypadButtonStyle())
     }
 }
-
-struct KeypadButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .opacity(configuration.isPressed ? 0.55 : 1)
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
