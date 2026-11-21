@@ -57,29 +57,31 @@ struct ConvertView: View {
 
     private var basePicker: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionTitle(text: "输入进制")
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 7) {
-                    ForEach(2...36, id: \.self) { b in
-                        Button {
-                            inBase = b
-                            rawInput = ""
-                        } label: {
-                            Text("\(b)")
-                                .font(.system(size: 13, weight: .bold, design: .monospaced))
-                                .foregroundStyle(b == inBase ? .white : Theme.dim)
-                                .frame(width: 34, height: 32)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 9)
-                                        .fill(b == inBase ? Theme.green.opacity(0.22) : Color(white: 0.10))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 9)
-                                        .stroke(b == inBase ? Theme.green : Color.clear, lineWidth: 1)
-                                )
-                        }
-                        .buttonStyle(.plain)
+            SectionTitle(text: "输入进制（全部列出）")
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 6),
+                spacing: 6
+            ) {
+                ForEach(2...36, id: \.self) { b in
+                    Button {
+                        inBase = b
+                        rawInput = ""
+                    } label: {
+                        Text("\(b)")
+                            .font(.system(size: 13, weight: .bold, design: .monospaced))
+                            .foregroundStyle(b == inBase ? .white : Theme.dim)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 32)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(b == inBase ? Theme.green.opacity(0.22) : Color(white: 0.10))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(b == inBase ? Theme.green : Color.clear, lineWidth: 1)
+                            )
                     }
+                    .buttonStyle(.plain)
                 }
             }
             Text("当前：\(RadixLabel.full(inBase))")

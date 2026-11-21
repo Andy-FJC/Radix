@@ -17,8 +17,8 @@ targets:
       base:
         PRODUCT_NAME: Radix
         PRODUCT_BUNDLE_IDENTIFIER: com.radix.converter
-        MARKETING_VERSION: "2.0.0"
-        CURRENT_PROJECT_VERSION: "20"
+        MARKETING_VERSION: "2.0.2"
+        CURRENT_PROJECT_VERSION: "22"
         SWIFT_VERSION: "5.0"
         IPHONEOS_DEPLOYMENT_TARGET: "16.0"
         TARGETED_DEVICE_FAMILY: "1"

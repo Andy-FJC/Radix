@@ -1,4 +1,4 @@
-# Radix · 多进制工具（iOS）v2.0.0
+# Radix · 多进制工具（iOS）v2.0.2
 
 进制转换、混合进制四则运算、机器码制、字符编码的 iOS App。SwiftUI 编写，零第三方依赖，自实现 BigInt，支持超大整数与负数。GitHub: Andy-FJC。保留所有权利。
 

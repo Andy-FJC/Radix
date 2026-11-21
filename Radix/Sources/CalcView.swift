@@ -8,7 +8,7 @@ struct CalcView: View {
     @State private var op: BinaryOp = .add
     @State private var activeSlot: Int = 0  // 0 = A, 1 = B
     @State private var outBase = 36
-    @State private var showOutBaseSheet = false
+    @State private var baseSheetSlot: Int? = nil  // nil 不显示，0=A 1=B 2=结果
     @State private var toast: String?
 
     private var parsedA: BigInt? {
@@ -27,8 +27,8 @@ struct CalcView: View {
 
     private var outcome: Outcome {
         guard let a = parsedA, let b = parsedB else { return .empty }
-        if operandA.contains("-") == false && BigUInt.parse(operandA, radix: baseA) == nil { return .invalid }
-        if operandB.contains("-") == false && BigUInt.parse(operandB, radix: baseB) == nil { return .invalid }
+        if !operandA.hasPrefix("-") && BigUInt.parse(operandA, radix: baseA) == nil { return .invalid }
+        if !operandB.hasPrefix("-") && BigUInt.parse(operandB, radix: baseB) == nil { return .invalid }
         switch op {
         case .add:      return .value(a.adding(b), nil)
         case .subtract: return .value(a.subtracting(b), nil)
@@ -46,9 +46,9 @@ struct CalcView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     header
-                    operandCard("操作数 A", value: $operandA, base: $baseA, slot: 0)
+                    operandCard("操作数 A", value: $operandA, base: baseA, slot: 0)
                     opRow
-                    operandCard("操作数 B", value: $operandB, base: $baseB, slot: 1)
+                    operandCard("操作数 B", value: $operandB, base: baseB, slot: 1)
                     resultSection
                     Text("整数运算 · 除法向零截断，余数与被除数同号")
                         .font(.system(size: 11))
@@ -67,9 +67,17 @@ struct CalcView: View {
                 .allowsHitTesting(false)
             }
         }
-        .sheet(isPresented: $showOutBaseSheet) {
-            outBaseSheet
+        .sheet(item: Binding(
+            get: { baseSheetSlot.map { SheetSlot(raw: $0) } },
+            set: { baseSheetSlot = $0?.raw }
+        )) { slot in
+            baseSheet(slot: slot.raw)
         }
+    }
+
+    private struct SheetSlot: Identifiable {
+        let raw: Int
+        var id: Int { raw }
     }
 
     private var header: some View {
@@ -85,17 +93,34 @@ struct CalcView: View {
         }
     }
 
-    private func operandCard(_ title: String, value: Binding<String>, base: Binding<Int>, slot: Int) -> some View {
+    private func operandCard(_ title: String, value: Binding<String>, base: Int, slot: Int) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(title)
                     .font(.system(size: 11.5, weight: .semibold))
                     .foregroundStyle(activeSlot == slot ? Theme.green : Theme.dim2)
                 Spacer()
-                baseMenu(base: base)
+                Button {
+                    activeSlot = slot
+                    baseSheetSlot = slot
+                } label: {
+                    HStack(spacing: 3) {
+                        Text("\(RadixLabel.full(base))")
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 7, weight: .heavy))
+                    }
+                    .font(.system(size: 10.5, weight: .bold))
+                    .foregroundStyle(Theme.purple)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .background(RoundedRectangle(cornerRadius: 7).fill(Theme.purpleBg))
+                }
+                .buttonStyle(.plain)
             }
 
-            Text(group(value.wrappedValue, size: groupSize(base.wrappedValue)))
+            Text(group(value.wrappedValue, size: groupSize(base)))
                 .font(.system(size: 23, weight: .semibold, design: .monospaced))
                 .foregroundStyle(activeSlot == slot ? Theme.value : Theme.dim)
                 .lineLimit(3)
@@ -111,30 +136,6 @@ struct CalcView: View {
             RoundedRectangle(cornerRadius: 18)
                 .stroke(activeSlot == slot ? Theme.green.opacity(0.6) : Theme.line, lineWidth: activeSlot == slot ? 1.5 : 1)
         )
-    }
-
-    private func baseMenu(base: Binding<Int>) -> some View {
-        Menu {
-            ForEach(2...36, id: \.self) { b in
-                Button("\(RadixLabel.full(b))") {
-                    base.wrappedValue = b
-                    if activeSlot == 0 { operandA = "" } else { operandB = "" }
-                }
-            }
-        } label: {
-            HStack(spacing: 3) {
-                Text("\(RadixLabel.full(base.wrappedValue))")
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 7, weight: .heavy))
-            }
-            .font(.system(size: 10.5, weight: .bold))
-            .foregroundStyle(Theme.purple)
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            .padding(.horizontal, 9)
-            .padding(.vertical, 5)
-            .background(RoundedRectangle(cornerRadius: 7).fill(Theme.purpleBg))
-        }
     }
 
     private var opRow: some View {
@@ -164,7 +165,7 @@ struct CalcView: View {
                 SectionTitle(text: "计算结果")
                 Spacer()
                 Button {
-                    showOutBaseSheet = true
+                    baseSheetSlot = 2
                 } label: {
                     HStack(spacing: 3) {
                         Text("\(RadixLabel.full(outBase))")
@@ -179,6 +180,7 @@ struct CalcView: View {
                     .padding(.vertical, 4)
                     .background(RoundedRectangle(cornerRadius: 7).fill(Theme.purpleBg))
                 }
+                .buttonStyle(.plain)
             }
 
             switch outcome {
@@ -196,7 +198,6 @@ struct CalcView: View {
                 }
             }
 
-            // 键盘放在结果下方，按当前活动输入框的进制显示
             Keypad(base: activeSlot == 0 ? baseA : baseB) { key in
                 handleKey(key)
             }
@@ -249,25 +250,27 @@ struct CalcView: View {
         .buttonStyle(.plain)
     }
 
-    private var outBaseSheet: some View {
-        NavigationStack {
+    /// A/B/结果进制共用的全列表选择器
+    private func baseSheet(slot: Int) -> some View {
+        let current = slot == 0 ? baseA : (slot == 1 ? baseB : outBase)
+        let title = slot == 0 ? "操作数 A 进制" : (slot == 1 ? "操作数 B 进制" : "结果进制")
+        return NavigationStack {
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 10) {
                     ForEach(2...36, id: \.self) { b in
                         Button {
-                            outBase = b
-                            showOutBaseSheet = false
+                            selectBase(b, slot: slot)
                         } label: {
                             Text(RadixLabel.full(b))
                                 .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(b == outBase ? .white : Theme.value)
+                                .foregroundStyle(b == current ? .white : Theme.value)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 40)
                                 .background(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .fill(b == outBase ? Theme.green.opacity(0.25) : Theme.card2)
+                                        .fill(b == current ? Theme.green.opacity(0.25) : Theme.card2)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -275,15 +278,28 @@ struct CalcView: View {
                 }
                 .padding()
             }
-            .navigationTitle("选择结果进制")
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("完成") { showOutBaseSheet = false }
+                    Button("完成") { baseSheetSlot = nil }
                 }
             }
         }
         .presentationDetents([.medium, .large])
+    }
+
+    private func selectBase(_ b: Int, slot: Int) {
+        if slot == 0 {
+            baseA = b
+            operandA = ""
+        } else if slot == 1 {
+            baseB = b
+            operandB = ""
+        } else {
+            outBase = b
+        }
+        baseSheetSlot = nil
     }
 
     // MARK: - 辅助

@@ -1,8 +1,11 @@
 import SwiftUI
 
 struct AboutView: View {
-    private let version = "2.0.0"
-    private let build = "20"
+    @Binding var showTutorial: Bool
+
+    private let version = "2.0.2"
+    private let build = "22"
+    private let repoURL = "https://github.com/Andy-FJC/Radix"
 
     var body: some View {
         ScrollView {
@@ -10,7 +13,7 @@ struct AboutView: View {
                 appIcon
                 titleBlock
                 infoCard
-                featuresCard
+                tutorialButton
                 rightsCard
             }
             .padding(.horizontal, 16)
@@ -21,18 +24,11 @@ struct AboutView: View {
     }
 
     private var appIcon: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 22)
-                .fill(LinearGradient(
-                    gradient: Gradient(colors: [Theme.purple, Theme.blue]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ))
-                .frame(width: 84, height: 84)
-            Text("R")
-                .font(.system(size: 44, weight: .heavy, design: .rounded))
-                .foregroundStyle(.white)
-        }
+        Image("AppLogo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 84, height: 84)
+            .clipShape(RoundedRectangle(cornerRadius: 19))
     }
 
     private var titleBlock: some View {
@@ -52,29 +48,52 @@ struct AboutView: View {
             DividerLine()
             infoRow(title: "Build", value: build)
             DividerLine()
-            infoRow(title: "GitHub", value: "Andy-FJC")
-            DividerLine()
-            infoRow(title: "支持进制", value: "2 – 36")
-            DividerLine()
-            infoRow(title: "最低系统", value: "iOS 16.0")
+
+            HStack {
+                Text("GitHub")
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(Theme.dim2)
+                Spacer()
+                if let url = URL(string: repoURL) {
+                    Link("Andy-FJC", destination: url)
+                        .font(.system(size: 12.5, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Theme.green)
+                }
+            }
+            .padding(.vertical, 11)
         }
         .padding(14)
         .background(RoundedRectangle(cornerRadius: 18).fill(Theme.card))
         .overlay(RoundedRectangle(cornerRadius: 18).stroke(Theme.line, lineWidth: 1))
     }
 
-    private var featuresCard: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            SectionTitle(text: "功能")
-            feature("转换", "2–36 进制全对照，任意进制输入")
-            feature("运算", "混合进制加减乘除，超大整数不溢出")
-            feature("码制", "真值 / 原码 / 反码 / 补码互转，8/16/32 位")
-            feature("字符", "ASCII 全表、区位/国标/机内码、Unicode/UTF-8")
+    private var tutorialButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            showTutorial = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "book.circle.fill")
+                    .font(.system(size: 26))
+                    .foregroundStyle(Theme.green)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("查看新手教程")
+                        .font(.system(size: 13.5, weight: .semibold))
+                        .foregroundStyle(Theme.value)
+                    Text("功能说明、支持进制与内置键盘用法")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.dim2)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Theme.dim)
+            }
+            .padding(14)
+            .background(RoundedRectangle(cornerRadius: 18).fill(Theme.card))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(Theme.line, lineWidth: 1))
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 18).fill(Theme.card))
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(Theme.line, lineWidth: 1))
+        .buttonStyle(KeypadButtonStyle())
     }
 
     private var rightsCard: some View {
@@ -98,21 +117,8 @@ struct AboutView: View {
             Spacer()
             Text(value)
                 .font(.system(size: 12.5, weight: .semibold, design: .monospaced))
-                .foregroundStyle(title == "GitHub" ? Theme.green : Theme.value)
+                .foregroundStyle(Theme.value)
         }
         .padding(.vertical, 11)
-    }
-
-    private func feature(_ name: String, _ desc: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Text(name)
-                .font(.system(size: 11.5, weight: .bold))
-                .foregroundStyle(Theme.purple)
-                .frame(width: 40, alignment: .leading)
-            Text(desc)
-                .font(.system(size: 11.5))
-                .foregroundStyle(Theme.value)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
     }
 }
